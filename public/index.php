@@ -1,43 +1,38 @@
 <?php
 
+
+
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Matcher\UrlMatcher;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 require __DIR__.'/../vendor/autoload.php';
 
-//path info recupere la route 
+
 $req = Request::createFromGlobals();
-//tout ce qu'il y a deriere l'index.php (qui est invisible si pas de noms de fichier)
-//var_dump($req->getPathInfo());
+$route = require __DIR__.'./../src/routes.php';
 
 
-// if($pathinfo === '/hello') include __DIR__.'/src/pages/hello.php';
-// if($pathinfo === '/bye') include __DIR__.'/src/pages/bye.php';
+$context = new RequestContext($req);
 
-//de http fondation
-$response = new Response();
+$urlMatcher = new UrlMatcher($route,$context);
 
-
-$map = [
-    '/hello'=>'hello.php',
-    '/bye' =>'bye.php',
-    '/about'=>'about.php'
-];
 $pathinfo = $req->getPathinfo();
 
-
-if($map[$pathinfo]){
+try{
+    $resutat = $urlMatcher->match($pathinfo);
+    extract($req->query->all());
+    extract($resutat);
     ob_start();
-    include __DIR__.'/../src/pages/'.$map[$pathinfo];
-    $response->setContent(ob_get_clean());
+    include __DIR__.'/../src/pages/'.$_route.'.php';
+    $response = new Response(ob_get_clean());
     
+}catch(ResourceNotFoundException $e){
+    $response = new Response("La page demander n'existe pas",404);
 
-}else{
-    $response->setContent('la page n\'existe pas');
-    $response->setStatusCode(404);
-
+}catch(Exception $e){
+$response = new Response('une erreur est arrivé',500);
 }
-
-
-
 $response->send();
