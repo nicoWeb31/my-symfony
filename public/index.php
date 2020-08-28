@@ -23,11 +23,9 @@ $pathinfo = $req->getPathinfo();
 
 try{
     $resutat = $urlMatcher->match($pathinfo);
-    extract($req->query->all());
-    extract($resutat);
-    ob_start();
-    include __DIR__.'/../src/pages/'.$_route.'.php';
-    $response = new Response(ob_get_clean());
+    
+    $req->attributes->add($resutat);
+    $response = call_user_func($resutat['_controller'], $req);
     
 }catch(ResourceNotFoundException $e){
     $response = new Response("La page demander n'existe pas",404);
